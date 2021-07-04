@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define ARR_SIZE 17
-#define POP_NUM 10
+#define POP_NUM 100
 #define MAX_PARENTS 10
 
 typedef struct DNA {
@@ -16,7 +16,8 @@ typedef struct DNA {
 } chromosome;
 void generate_random_pop(char *result);
 void calculate_fitness(chromosome *pop, char *result);
-void genetic_crossover(chromosome *parents);
+void genetic_crossover(chromosome *parents, int size);
+void mate_parents(chromosome *fstparent, chromosome *scndparent);
 void generate_random_pop(char *result) {
 	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
 	
@@ -50,19 +51,37 @@ void calculate_fitness(chromosome *pop, char *result) {
 		printf("FITNESS AND REL FITNESS %d %f\n",pop[i].fitness, pop[i].relative_fitness);
 	}
 
-	chromosome parents[MAX_PARENTS];
-
+	chromosome parents[MAX_PARENTS] = {0};
+	int num_elements = 0;
+	int d = 0;
+	int l = 0;
 	for(int k = 0; k < POP_NUM; k++) {
-		for(int l = 0; l < ((int)ceil((pop[k].relative_fitness*10))); l++) {
+		for(l = d; l < ((int)ceil((pop[k].relative_fitness*10))); l++) {
 			parents[l] = pop[k];
-			printf("%d, rel*10 = %d \n", parents[l].fitness, (int)ceil(pop[k].relative_fitness*10));
+			num_elements++;
+			printf("%d, rel*10 = %d and sequence %s\n", parents[l].fitness, (int)ceil(pop[k].relative_fitness*10), parents[l].sequence);
 		}
+		d = l;
 	}
-
-	genetic_crossover(parents);
+	printf("SIZE OF 1 CHROMOSOME %ld and SIZE OF PARENTS %ld\n", sizeof(chromosome), sizeof(parents));
+	for(int o = 0; o < MAX_PARENTS; o++) {
+		printf("%s\n", parents[o].sequence);
+	}
+	genetic_crossover(parents, num_elements);
 
 }
-void genetic_crossover(chromosome *parents) {
+void genetic_crossover(chromosome *parents, int size) {
+	if(size) {
+		int fstindex = rand() % size;
+		int scndindex = rand() % size;
+		printf("FIRST INDEX: %d, SECOND INDEX: %d and SIZE: %d\n", fstindex,scndindex, size);
+		printf("SEQUENCES: %s       %s\n", parents[fstindex].sequence, parents[scndindex].sequence);
+		mate_parents(&parents[fstindex], &parents[scndindex]);
+	}
+}
+
+void mate_parents(chromosome *fstparent, chromosome *scndparent) {
+	printf("SEQUENCE OF FIRST PARENT: %s and SECOND: %s", fstparent->sequence, scndparent->sequence);
 	
 }
 
