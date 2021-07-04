@@ -7,6 +7,7 @@
 #define ARR_SIZE 17
 #define POP_NUM 100
 #define MAX_PARENTS 10
+#define MUTATION_RATE 0.01
 
 typedef struct DNA {
 	char sequence[ARR_SIZE];
@@ -18,6 +19,9 @@ void generate_random_pop(char *result);
 void calculate_fitness(chromosome *pop, char *result);
 void genetic_crossover(chromosome *parents, int size);
 void mate_parents(chromosome *fstparent, chromosome *scndparent);
+void genetic_mutation(chromosome *child);
+char generate_rand_char();
+
 void generate_random_pop(char *result) {
 	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
 	
@@ -81,8 +85,32 @@ void genetic_crossover(chromosome *parents, int size) {
 }
 
 void mate_parents(chromosome *fstparent, chromosome *scndparent) {
-	printf("SEQUENCE OF FIRST PARENT: %s and SECOND: %s", fstparent->sequence, scndparent->sequence);
-	
+	printf("SEQUENCE OF FIRST PARENT: %s and SECOND: %s\n", fstparent->sequence, scndparent->sequence);
+	int split_index = rand() % ARR_SIZE;
+	chromosome child;
+	for(int i = 0; i < ARR_SIZE; i++) {
+		if(i < split_index) child.sequence[i] = fstparent->sequence[i];
+		else child.sequence[i] = scndparent->sequence[i];
+	}
+	printf("CHILD SEQUENCE %s\n", child.sequence);
+
+	genetic_mutation(&child);
+}
+
+void genetic_mutation(chromosome *child) {
+	if((rand() % 10) == MUTATION_RATE*100) {
+		int prob = rand() % ARR_SIZE;
+		for(int i = 0; i < prob; i++) {
+			int index = rand() % ARR_SIZE;
+			child->sequence[index] = generate_rand_char();
+		}
+	}
+	printf("MUTATED CHILD %s\n", child->sequence);
+}
+char generate_rand_char() {
+	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
+	char ret = SAMPLE[rand() % 49];
+	return ret;
 }
 
 
