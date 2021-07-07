@@ -4,10 +4,10 @@
 #include <time.h>
 #include <math.h>
 
-#define ARR_SIZE 7
-#define POP_NUM 100
-#define MAX_PARENTS 10
+#define ARR_SIZE 12
+#define POP_NUM 1000
 #define MUTATION_RATE 0.01
+#define NUM_GENERATIONS 50
 
 typedef struct DNA {
 	char sequence[ARR_SIZE];
@@ -16,32 +16,23 @@ typedef struct DNA {
 
 } chromosome;
 
-chromosome *generate_random_pop(char *result);
+chromosome *generate_random_pop(char *result, const char *SAMPLE);
 int calculate_fitness(chromosome *pop, char *result);
 chromosome mate_parents(chromosome *fstparent, chromosome *scndparent);
-chromosome *genetic_mutation(chromosome *child);
-chromosome tournament_selection(chromosome *pop, int sum_fitness);
+chromosome genetic_mutation(chromosome *child, const char *SAMPLE);
+chromosome tournament_selection(chromosome *pop);
 char generate_rand_char();
 
-chromosome *generate_random_pop(char *result) {
-	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
+chromosome *generate_random_pop(char *result, const char *SAMPLE) {
 	
 	chromosome *pop = malloc(sizeof(chromosome) * POP_NUM);
 	int rand_num = 0;
 	for(int i = 0; i < POP_NUM; i++) {
 		for(int j = 0; j < ARR_SIZE; j++) {
-			rand_num = rand() % strlen(SAMPLE);
+			rand_num = rand() % (strlen(SAMPLE));
 			pop[i].sequence[j] += SAMPLE[rand_num];
 		}
 	}
-
-	for(int k = 0; k < POP_NUM; k++) {
-		for(int l = 0; l < ARR_SIZE; l++) {
-			printf("%c", pop[k].sequence[l]);
-		}
-		printf("\n");
-	}
-
 	return pop;
 }
 
@@ -53,21 +44,19 @@ int calculate_fitness(chromosome *pop, char *result) {
 			}
 		}
 		pop[i].relative_fitness = (float)pop[i].fitness/strlen(result);
-		printf("FITNESS AND REL FITNESS %d %f\n",pop[i].fitness, pop[i].relative_fitness);
 	}
 
 	int sum_fitness = 0;
 	for(int k = 0; k < POP_NUM; k++) {
 		sum_fitness += pop[k].fitness;
 	}
-	printf("SUM OF ALL FITNESSES %d\n", sum_fitness);
 	return sum_fitness;
 }
-chromosome tournament_selection(chromosome *pop, int sum_fitness) {
-	int num_comps = (rand() % POP_NUM)-1;
+chromosome tournament_selection(chromosome *pop) {
+	int num_comps = (rand() % POP_NUM + 1);
 	chromosome comps[num_comps];
 	for(int i = 0; i < num_comps; i++) {
-		int index = (rand() % POP_NUM)-1;
+		int index = (rand() % (POP_NUM-1));
 		comps[i] = pop[index];
 	}
 	chromosome parent = comps[0];
@@ -76,14 +65,12 @@ chromosome tournament_selection(chromosome *pop, int sum_fitness) {
 			parent = comps[j];
 		}
 	}
-	printf("CHOSEN PARENT FITNESS IS %d(num comps = %d)\n", parent.fitness, num_comps);
 	return parent;
 }
 
 
 chromosome mate_parents(chromosome *fstparent, chromosome *scndparent) {
-	printf("SEQUENCE OF FIRST PARENT: %s and SECOND: %s\n", fstparent->sequence, scndparent->sequence);
-	int split_index = rand() % ARR_SIZE;
+	int split_index = rand() % (ARR_SIZE-1);
 	chromosome child;
 	for(int i = 0; i < ARR_SIZE; i++) {
 		if(i < split_index) {
@@ -93,42 +80,55 @@ chromosome mate_parents(chromosome *fstparent, chromosome *scndparent) {
 			child.sequence[i] = scndparent->sequence[i];
 		}
 	}
-	printf("CHILD SEQUENCE %s\n", child.sequence);
-
 	return child;
 }
 
-chromosome *genetic_mutation(chromosome *child) {
-	chromosome *new_pop = malloc(sizeof(chromosome) * POP_NUM);
-	int arr_size = 0;
+chromosome genetic_mutation(chromosome *child, const char *SAMPLE) {
 	for(int i = 0; i < POP_NUM; i++) {
 		if((rand() % 100) == MUTATION_RATE*100) {
 			int prob = rand() % ARR_SIZE;
 			for(int j = 0; i < prob; i++) {
-				int index = rand() % ARR_SIZE;
-				child->sequence[index] = generate_rand_char();
-				printf("PROB %d, INDEX %d", prob, index);
-				new_pop[j] = *child;
-				arr_size++;
+				int index = rand() % (ARR_SIZE-1);
+				child->sequence[index] = generate_rand_char(SAMPLE);
 			}
 		}
 	}
-	return new_pop;
+	return *child;
 }
-char generate_rand_char() {
-	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
-	char ret = SAMPLE[rand() % 47];
-	printf("RANDOM CHAR %c\n", ret);
-	return ret;
+char generate_rand_char(const char *SAMPLE) {
+	return SAMPLE[rand() % (strlen(SAMPLE)-1)];
 }
-
-
-
 
 int main(int argc, char *argv[]) {
 
 	srand(time(0));
 	printf("STARTING GENETIC ALGORITHM\n");
-	generate_random_pop("unicorn");
+	char *result = "deeznutsbruh";
+	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
+	chromosome *pop = generate_random_pop(result, SAMPLE);
+	for(int i = 0; i < NUM_GENERATIONS; i++) {
+		int check = 0;
+		chromosome new_pop[POP_NUM];
+		calculate_fitness(pop, result);
+		for(int j = 0; j < POP_NUM; j++) {
+			chromosome first_parent = tournament_selection(pop);
+			chromosome second_parent = tournament_selection(pop);
+			chromosome child = mate_parents(&first_parent, &second_parent);
+			chromosome mut_child = genetic_mutation(&child, SAMPLE);
+			new_pop[j] = mut_child;
+
+			printf("%s\n", mut_child.sequence);
+			if(!strcmp(mut_child.sequence, result)) {
+				check = 1;
+				printf("FOUND THE RESULT: %s\n", mut_child.sequence);
+				break;
+			}
+		}
+		if(check) {
+			break;
+		}
+		pop = new_pop;
+	}
+	printf("LENGTH OF THE SAMPLE IS %ld\n", strlen(SAMPLE));
 	return 0;
 }
