@@ -4,10 +4,10 @@
 #include <time.h>
 #include <math.h>
 
-#define ARR_SIZE 12
+#define ARR_SIZE 13
 #define POP_NUM 1000
 #define MUTATION_RATE 0.01
-#define NUM_GENERATIONS 50
+#define NUM_GENERATIONS 30
 
 typedef struct DNA {
 	char sequence[ARR_SIZE];
@@ -29,8 +29,8 @@ chromosome *generate_random_pop(char *result, const char *SAMPLE) {
 	int rand_num = 0;
 	for(int i = 0; i < POP_NUM; i++) {
 		for(int j = 0; j < ARR_SIZE; j++) {
-			rand_num = rand() % (strlen(SAMPLE));
-			pop[i].sequence[j] += SAMPLE[rand_num];
+			rand_num = rand() % (strlen(SAMPLE)-1);
+			pop[i].sequence[j] = SAMPLE[rand_num];
 		}
 	}
 	return pop;
@@ -84,13 +84,11 @@ chromosome mate_parents(chromosome *fstparent, chromosome *scndparent) {
 }
 
 chromosome genetic_mutation(chromosome *child, const char *SAMPLE) {
-	for(int i = 0; i < POP_NUM; i++) {
-		if((rand() % 100) == MUTATION_RATE*100) {
-			int prob = rand() % ARR_SIZE;
-			for(int j = 0; i < prob; i++) {
-				int index = rand() % (ARR_SIZE-1);
-				child->sequence[index] = generate_rand_char(SAMPLE);
-			}
+	if((rand() % 10) == MUTATION_RATE*100) {
+		int prob = rand() % ARR_SIZE;
+		for(int j = 0; j < prob; j++) {
+			int index = rand() % (ARR_SIZE-1);
+			child->sequence[index] = generate_rand_char(SAMPLE);
 		}
 	}
 	return *child;
@@ -103,9 +101,10 @@ int main(int argc, char *argv[]) {
 
 	srand(time(0));
 	printf("STARTING GENETIC ALGORITHM\n");
-	char *result = "deeznutsbruh";
+	char *result = "the flash";
 	const char *SAMPLE = "1234567890qwertyuiopasdfghjklzxcvbnm  [];'=-./,?!";
 	chromosome *pop = generate_random_pop(result, SAMPLE);
+	int free_aptr = 0;
 	for(int i = 0; i < NUM_GENERATIONS; i++) {
 		int check = 0;
 		chromosome new_pop[POP_NUM];
@@ -126,6 +125,10 @@ int main(int argc, char *argv[]) {
 		}
 		if(check) {
 			break;
+		}
+		if(!free_aptr) {
+			free(pop);
+			free_aptr = 1;
 		}
 		pop = new_pop;
 	}
